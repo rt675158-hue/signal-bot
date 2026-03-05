@@ -1,2 +1,5 @@
-requests
+ccxt
 pandas
+requests
+python-dateutil
+pytz
