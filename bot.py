@@ -2,8 +2,8 @@ import requests
 import pandas as pd
 import time
 
-BOT_TOKEN = "YOUR_BOT_TOKEN"
-CHAT_ID = "YOUR_CHAT_ID"
+BOT_TOKEN = "8780560298:AAHGfAMAbFtfJ-5cAWMfcfy86UiXZHPoREQ"
+CHAT_ID = "7969223643"
 
 SYMBOLS = ["BTCUSDT","ETHUSDT","XRPUSDT","SOLUSDT"]
 
