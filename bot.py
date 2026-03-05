@@ -3,7 +3,9 @@ import pandas as pd
 import requests
 import time
 
-exchange = ccxt.binance()
+exchange = ccxt.binance({
+    'enableRateLimit': True
+})
 
 pairs = ["BTC/USDT","ETH/USDT","XRP/USDT","SOL/USDT"]
 
@@ -17,14 +19,14 @@ def send_message(message):
 
 def calculate_rsi(data, period=14):
     delta = data.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    gain = delta.clip(lower=0).rolling(period).mean()
+    loss = -delta.clip(upper=0).rolling(period).mean()
     rs = gain / loss
-    return 100 - (100 / (1 + rs))
+    return 100 - (100/(1+rs))
 
 def check_signal(pair):
-    ohlcv = exchange.fetch_ohlcv(pair, timeframe='25m', limit=100)
-    df = pd.DataFrame(ohlcv, columns=['time','open','high','low','close','volume'])
+    ohlcv = exchange.fetch_ohlcv(pair,'15m',limit=100)
+    df = pd.DataFrame(ohlcv,columns=['time','open','high','low','close','volume'])
 
     df['ema20'] = df['close'].ewm(span=20).mean()
     df['ema50'] = df['close'].ewm(span=50).mean()
@@ -34,19 +36,19 @@ def check_signal(pair):
     price = last['close']
 
     entry = round(price,2)
-    stoploss = round(price * 0.99,2)
-    target = round(price * 1.02,2)
+    stoploss = round(price*0.99,2)
+    target = round(price*1.02,2)
 
     signal = None
 
     if last['ema20'] > last['ema50'] and last['rsi'] > 55:
         signal = "BUY"
 
-    elif last['ema20'] < last['ema50'] and last['rsi'] < 45:
+    if last['ema20'] < last['ema50'] and last['rsi'] < 45:
         signal = "SELL"
 
     if signal:
-        message = f"""
+        message=f"""
 PAIR: {pair}
 SIGNAL: {signal}
 
@@ -54,13 +56,9 @@ ENTRY: {entry}
 STOPLOSS: {stoploss}
 TARGET: {target}
 
-TIMEFRAME: 25m
-ACCURACY: 70%
+TIMEFRAME: 15m
 """
         send_message(message)
 
-while True:
-    for pair in pairs:
-        check_signal(pair)
-
-    time.sleep(1500)
+for pair in pairs:
+    check_signal(pair)
